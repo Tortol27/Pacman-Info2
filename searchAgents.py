@@ -295,17 +295,14 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        return self.startingPosition, ()
+        return (self.startingPosition[0], self.startingPosition[1], (False, False, False, False))
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        if len(state[1])==4: ## Cuando ya visito todas las esquinas
-            print(state[1])
-            return True
-        return False
+        return False not in state[2]
 
     def getSuccessors(self, state):
         """
@@ -328,16 +325,15 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
-            x,y = state[0]
+            x, y, c = state
             dx, dy = Actions.directionToVector(action)
             nextx, nexty = int(x + dx), int(y + dy)
             hitsWall = self.walls[nextx][nexty]
-            corner = state[1]
+            nextc = list(c)
+            if (nextx, nexty) in self.corners:
+                nextc[self.corners.index((nextx, nexty))] = True
             if not hitsWall:
-                posicion = (nextx, nexty)
-                if posicion in self.corners and posicion not in state[1]:
-                    corner += (posicion, )
-                successors.append(((posicion, corner), action, 1))
+                successors.append(((nextx, nexty, tuple(nextc)), action, 1))
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -373,7 +369,31 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+   # Minimum Spanning Tree
+    mstw = 0
+    tree = [(state[0], state[1])]
+    nodes = [c for c in corners if not state[2][corners.index(c)]]
+    edges = []
+    weights = []
+
+    def manhattanDist(p1, p2):
+        return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+
+    m = 0
+    while len(nodes) > 0:
+        edges = []
+        weights = []
+        for tn in tree:
+            for fn in nodes:
+                edges.append(fn)
+                weights.append(manhattanDist(tn, fn))
+        m = min(weights)
+        n = edges[weights.index(m)]
+        nodes.remove(n)
+        tree.append(n)
+        mstw += m
+
+    return mstw / 1.8
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
@@ -467,7 +487,9 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
+    print()
+
+    # return 0
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -498,7 +520,8 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return search.aStarSearch(problem, foodHeuristic)
+        # util.raiseNotDefined()
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -534,7 +557,8 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x,y = state
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.food[x][y]
+        # util.raiseNotDefined()
 
 def mazeDistance(point1, point2, gameState):
     """

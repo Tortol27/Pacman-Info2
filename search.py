@@ -145,19 +145,56 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    cola = util.PriorityQueue() # Utilizamos una cola con prioridad para almacenar el camino
-    estados = set() # Lista de estados visitados
-    ## Agregamos el estado inicial a la cola
-    cola.push((problem.getStartState(), [], 0),heuristic(problem.getStartState(),problem)) # Colocamos el estado inicial en la cola
-    while not cola.isEmpty():
-        state, action, cost = cola.pop() ## Leemos de la cola
-        if problem.isGoalState(state): ## Condicion de salida
-            return action
-        if state not in estados:
-            estados.add(state) ## Agregamos a la lista de estados visitados
-            for estado, accion, costo in problem.getSuccessors(state): ## Revisamos todos los nodos sucesores
-                if estado not in estados:
-                    cola.push((estado,action + [accion], cost + costo), cost + costo + heuristic(estado,problem))
+    from util import PriorityQueueWithFunction
+
+    def funcionCosto(node):
+        return node[2] + 10 * heuristic(node[0], problem)
+
+    # El costo minimo guardamos en un diccionario donde las claves son los estados y los valores los costos
+    # Asi podemos reducir el tamaño del nodo de la pila y simplificar la logica, para evadir ciclos
+    costos = dict()
+    # Los caminos tambien se almacenan de la misma manera
+    paths = dict()
+    
+    state = problem.getStartState()
+    costos[state] = 0
+    path = []
+    _fringe = PriorityQueueWithFunction(funcionCosto)
+
+    if problem.isGoalState(state):
+        return path
+
+    for st, action, cost in problem.getSuccessors(state):
+        node = (st, [action], cost)
+        _fringe.push(node)
+
+    while True:
+        if _fringe.isEmpty():
+            break
+
+        node, path, node_cost = _fringe.pop()
+
+        if problem.isGoalState(node):
+            return path
+
+        # Si es un estado ya visitado y tiene un costo menor, continua
+        if node in costos and node_cost > costos[node]:
+            continue
+
+        # Si no guarda el estado y el nuevo costo minimo
+        costos[node] = node_cost
+        paths[node] = path
+
+        # Expandir nodo
+        succ = problem.getSuccessors(node)
+        for st, action, cost in succ:
+            next_path = list(path)
+            next_path.append(action)
+            next_node = (st, next_path, node_cost + cost)
+            _fringe.push(next_node)
+
+    # Goal not found
+    return []
 
 
 # Abbreviations
