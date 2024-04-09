@@ -487,9 +487,89 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    print()
+### MST
+    mstw = 0
+    tree = [position]
+    nodes = [f for f in foodGrid.asList() ]
+    edges = []
+    weights = []
 
-    # return 0
+    from util import manhattanDistance
+    m = 0
+    while len(nodes) > 0:
+        edges = []
+        weights = []
+        for tn in tree:
+            for fn in nodes:
+                edges.append(fn)
+                weights.append(manhattanDistance(tn, fn))
+        m = min(weights)
+        n = edges[weights.index(m)]
+        nodes.remove(n)
+        tree.append(n)
+        mstw += m
+
+    return mstw
+
+## MST Kruskal
+    # def find(parent, i):
+    #     if parent[i] == i:
+    #         return i
+    #     return find(parent, parent[i])
+
+    # def union(parent, rank, x, y):
+    #     xroot = find(parent, x)
+    #     yroot = find(parent, y)
+
+    #     if rank[xroot] < rank[yroot]:
+    #         parent[xroot] = yroot
+    #     elif rank[xroot] > rank[yroot]:
+    #         parent[yroot] = xroot
+    #     else:
+    #         parent[yroot] = xroot
+    #         rank[xroot] += 1
+
+    # def kruskal_mst(graph):
+    #     result = []
+    #     i = 0
+    #     e = 0
+    #     graph = sorted(graph, key=lambda item: item[2])
+    #     parent = []
+    #     rank = []
+
+    #     for node in range(len(graph)):
+    #         parent.append(node)
+    #         rank.append(0)
+
+    #     while e < len(graph) - 1:
+    #         u, v, w = graph[i]
+    #         i += 1
+    #         x = find(parent, u)
+    #         y = find(parent, v)
+
+    #         if x != y:
+    #             e += 1
+    #             result.append([u, v, w])
+    #             union(parent, rank, x, y)
+
+    #     return result
+
+    # tree = [position]
+    # nodes = [f for f in foodGrid.asList()]
+    # edges = []
+    # graph = []
+
+    # from util import manhattanDistance
+
+    # for tn in tree:
+    #     for fn in nodes:
+    #         edges.append(fn)
+    #         graph.append((tree.index(tn), nodes.index(fn), manhattanDistance(tn, fn)))
+
+    # mst = kruskal_mst(graph)
+    # mstw = sum(weight for _, _, weight in mst)
+
+    # return mstw #* 2.8
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -520,7 +600,7 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
-        return search.aStarSearch(problem, foodHeuristic)
+        return search.bfs(problem)
         # util.raiseNotDefined()
 
 class AnyFoodSearchProblem(PositionSearchProblem):
