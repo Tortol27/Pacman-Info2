@@ -277,7 +277,7 @@ class CornersProblem(search.SearchProblem):
         """
         Stores the walls, pacman's starting position and corners.
         """
-        self.walls = startingGameState.getWalls()
+        self.walls = startingGameState.getWalls() 
         self.startingPosition = startingGameState.getPacmanPosition()
         top, right = self.walls.height-2, self.walls.width-2
         self.corners = ((1,1), (1,top), (right, 1), (right, top))
@@ -301,28 +301,29 @@ class CornersProblem(search.SearchProblem):
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
+        ## Si ya visito las 4 esquinas entonces es el goal State
         if len(state[1])==4: ## Cuando ya visito todas las esquinas
-            print(state[1])
-            return True
+            print(state[1]) 
+            return True 
         return False
 
     def getSuccessors(self, state):
-        successors = []
-        currentPosition, visitedCorners = state
-        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            x, y = currentPosition
-            dx, dy = Actions.directionToVector(action)
-            nextx, nexty = int(x + dx), int(y + dy)
-            if not self.walls[nextx][nexty]:
-                nextPosition = (nextx, nexty)
-                if nextPosition in self.corners and nextPosition not in visitedCorners:
-                    updatedVisitedCorners = visitedCorners.union({nextPosition})
-                    successors.append(((nextPosition, updatedVisitedCorners), action, 1))
+        successors = [] ## Lista de sucesores
+        currentPosition, visitedCorners = state ## Posicion actual y esquinas visitadas
+        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]: ## Para cada accion
+            x, y = currentPosition ## Posicion actual seteamos en x,y
+            dx, dy = Actions.directionToVector(action) ## Calculamos el vector de direccion
+            nextx, nexty = int(x + dx), int(y + dy) ## Calculamos la siguiente posicion
+            if not self.walls[nextx][nexty]: ## Si no hay pared
+                nextPosition = (nextx, nexty) ## Seteamos la siguiente posicion
+                if nextPosition in self.corners and nextPosition not in visitedCorners: ## Si la siguiente posicion es una esquina y no ha sido visitada
+                    updatedVisitedCorners = visitedCorners.union({nextPosition}) ## Actualizamos las esquinas visitadas con la nueva esquina
+                    successors.append(((nextPosition, updatedVisitedCorners), action, 1)) ## Agregamos el sucesor con la esquina visitada
                 else:
-                    successors.append(((nextPosition, visitedCorners), action, 1))
+                    successors.append(((nextPosition, visitedCorners), action, 1)) ## Agregamos el sucesor sin la esquina visitada
 
         self._expanded += 1
-        return successors
+        return successors ## Retornamos los sucesores
 
 
     def getCostOfActions(self, actions):
@@ -356,19 +357,20 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    currentPosition, visitedCorners = state
-    unvisitedCorners = [corner for corner in corners if corner not in visitedCorners]
-    totalDistance = 0
-    currentPos = currentPosition
-
+    ## Heuristica de la suma de las distancias de las esquinas no visitadas
+    currentPosition, visitedCorners = state  ## Seteamos la posicion actual y las esquinas visitadas
+    unvisitedCorners = [corner for corner in corners if corner not in visitedCorners] ## Seteamos las esquinas no visitadas
+    totalDistance = 0 ## Seteamos la distancia total
+    currentPos = currentPosition ## Posicion actual
+    ## Mientras haya esquinas no visitadas
     while unvisitedCorners:
-        distances = [(util.manhattanDistance(currentPos, corner), corner) for corner in unvisitedCorners]
-        distance, nearestCorner = min(distances)
-        totalDistance += distance
-        currentPos = nearestCorner
-        unvisitedCorners.remove(nearestCorner)
+        distances = [(util.manhattanDistance(currentPos, corner), corner) for corner in unvisitedCorners] ## Calculo de las distancias
+        distance, nearestCorner = min(distances) ## Selecciono la esquina mas cercana
+        totalDistance += distance ## Sumo la distancia
+        currentPos = nearestCorner ## Actualizo la posicion actual
+        unvisitedCorners.remove(nearestCorner) ## Elimino la esquina de las no visitadas
 
-    return totalDistance
+    return totalDistance ## Retorno la suma de las distancias
 
 
 class AStarCornersAgent(SearchAgent):
@@ -551,3 +553,33 @@ def mazeDistance(point1, point2, gameState):
     assert not walls[x2][y2], 'point2 is a wall: ' + str(point2)
     prob = PositionSearchProblem(gameState, start=point1, goal=point2, warn=False, visualize=False)
     return len(search.bfs(prob))
+
+
+##Explicacion de la implementacion
+
+
+##Explique la heurística propuesta e implementada en A.
+##
+##CornersHeuristic acetpa dos parametros state y problem. 
+##Para nosotros state es una tupla que contiene la posicion actual y las esquinas visitadas. 
+##Problem es la instancia de CornersProblem. 
+##La heuristica consiste en calcular la suma de las distancias de las esquinas no visitadas. 
+##Para ello se calcula la distancia de la posicion actual a cada una de las esquinas no visitadas y se selecciona la mas cercana. 
+##Se suma la distancia y se actualiza la posicion actual. 
+##Se repite el proceso hasta que no haya esquinas no visitadas. 
+##Finalmente se retorna la suma de las distancias.
+
+
+##Su agente no va a encontrar siempre el camino más corto posible. Analice y explique por qué sucede esto.
+##Intente describir un pequeño ejemplo en el cual dirigirse repetidamente al punto más cercano no resulta
+##en encontrar el camino más corto para comer todos los puntos.
+##
+## la estrategia de ir siempre a la esquina más cercana parece intuitiva y eficiente, pero puede llevar a soluciones subóptimas. 
+## Esto se debe a que la cercanía de una esquina no garantiza que el camino completo hacia esa esquina 
+## y las esquinas restantes sea el más corto.
+## si hay una pared entre la esquina más cercana y la siguiente esquina más cercana,
+## el agente puede terminar dando un rodeo innecesario para llegar a la esquina más cercana.
+## Por ejemplo, si el agente está en la esquina superior izquierda y la esquina inferior izquierda es la más cercana,
+## pero hay una pared en el medio, el agente puede terminar yendo a la esquina superior derecha y luego a la esquina inferior derecha,
+## lo que no es el camino más corto para llegar a la esquina inferior izquierda.
+## Por lo tanto, la estrategia de ir siempre a la esquina más cercana no garantiza el camino más corto para comer todas las esquinas.
